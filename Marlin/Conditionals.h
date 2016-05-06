@@ -337,6 +337,8 @@
   /**
    * Temp Sensor defines
    */
+   // BQ Comment Out Heating Changes
+   /*
   #if TEMP_SENSOR_0 == -2
     #define HEATER_0_USES_MAX6675
   #elif TEMP_SENSOR_0 == -1
@@ -388,6 +390,8 @@
     #define THERMISTORBED TEMP_SENSOR_BED
     #define BED_USES_THERMISTOR
   #endif
+  */
+   // BQ END
 
   /**
    * ARRAY_BY_EXTRUDERS based on EXTRUDERS

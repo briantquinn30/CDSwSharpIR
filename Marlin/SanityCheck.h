@@ -280,6 +280,9 @@
 /**
  * Test Heater, Temp Sensor, and Extruder Pins; Sensor Type must also be set.
  */
+
+// BQ NO HEAT
+/* 
 #if EXTRUDERS > 3
   #if !HAS_HEATER_3
     #error HEATER_3_PIN not defined for this board.
@@ -331,6 +334,9 @@
 #elif TEMP_SENSOR_0 == 0
   #error TEMP_SENSOR_0 is required.
 #endif
+*/ 
+ //BQ END
+
 
 /**
  * Warnings for old configurations

@@ -52,7 +52,7 @@ SharpIR::SharpIR(int irPin, int avg, int tolerance, int sensorModel) {
     _model=sensorModel;
     
     analogReference(DEFAULT);
- 
+    pinMode (_irPin, INPUT);
 }
 
 
@@ -70,6 +70,7 @@ SharpIR::SharpIR(int irPin, int avg, int tolerance, int sensorModel) {
 //BQ 1080 is used for CDS
 int SharpIR::mm() {
     int raw=analogRead(_irPin);
+    //Serial.print(raw);
     float puntualDistance=12343.85*pow(raw,-1.15)*10;
     return puntualDistance;
     }

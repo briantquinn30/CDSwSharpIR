@@ -299,6 +299,7 @@ bool target_direction;
 #if ENABLED(AUTO_BED_LEVELING_FEATURE)
   int xy_travel_speed = XY_TRAVEL_SPEED;
   float zprobe_zoffset = Z_PROBE_OFFSET_FROM_EXTRUDER;
+  bool bed_leveled = false;  //BQ
 #endif
 
 #if ENABLED(Z_DUAL_ENDSTOPS) && DISABLED(DELTA)
@@ -423,12 +424,14 @@ bool target_direction;
   Servo servo[NUM_SERVOS];
 #endif
 
-void ir_distance_sensor_init() // BQ
-{
-  #ifdef IR_DISTANCE_SENSOR
-    SharpIR ir_ds(IR_DISTANCE_SENSOR_PIN, IR_DISTANCE_SENSOR_AVG,IR_DISTANCE_SENSOR_TOL, IR_DISTANCE_SENSOR_MODEL);
-  #endif    
-}
+//void ir_distance_sensor_init() // BQ
+//{
+  //SharpIR ir_ds(IR_DISTANCE_SENSOR_PIN, IR_DISTANCE_SENSOR_AVG,IR_DISTANCE_SENSOR_TOL, IR_DISTANCE_SENSOR_MODEL);   
+//}
+
+#ifdef IR_DISTANCE_SENSOR
+   SharpIR ir_ds(IR_DISTANCE_SENSOR_PIN, IR_DISTANCE_SENSOR_AVG,IR_DISTANCE_SENSOR_TOL, IR_DISTANCE_SENSOR_MODEL); 
+#endif
 
 #ifdef CHDK
   unsigned long chdkHigh = 0;
@@ -704,7 +707,10 @@ void setup() {
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
   servo_init();
-  ir_distance_sensor_init();
+  // BQ
+  //#ifdef IR_DISTANCE_SENSOR
+  //  ir_distance_sensor_init();
+  //#endif
 
   #if HAS_CONTROLLERFAN
     SET_OUTPUT(CONTROLLERFAN_PIN); //Set pin used for driver cooling fan
@@ -724,7 +730,7 @@ void setup() {
   #endif // Z_PROBE_SLED
 
   setup_homepin();
-  init_home_and_sensor(); //Initial Homing Sequence plus initial measurement from IR Sensor
+  //init_home_and_sensor(); //BQ Initial Homing Sequence plus initial measurement from IR Sensor
 
   #ifdef STAT_LED_RED
     pinMode(STAT_LED_RED, OUTPUT);
@@ -750,6 +756,7 @@ void setup() {
  *  - Call LCD update
  */
 void loop() {
+  SERIAL_PROTOCOLLN(ir_ds.distance());
   if (commands_in_queue < BUFSIZE - 1) get_command();
 
   #if ENABLED(SDSUPPORT)
@@ -807,7 +814,8 @@ void gcode_line_error(const char* err, bool doFlush = true) {
  *  - The active serial input (usually USB)
  *  - The SD card file being actively printed
  */
-void get_command() {
+void get_command()
+ {
 
   if (drain_queued_commands_P()) return; // priority is given to non-serial commands
 

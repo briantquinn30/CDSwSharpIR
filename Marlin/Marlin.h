@@ -304,6 +304,7 @@ extern bool axis_known_position[3]; // axis[n].is_known
 
 #if ENABLED(AUTO_BED_LEVELING_FEATURE)
   extern float zprobe_zoffset;
+  extern bool bed_leveled;
 #endif
 
 #if ENABLED(PREVENT_DANGEROUS_EXTRUDE)

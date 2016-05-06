@@ -35,6 +35,10 @@
 #include "ultralcd_st7920_u8glib_rrd.h"
 #include "Configuration.h"
 
+#ifdef IR_DISTANCE_SENSOR  //BQ
+  #include "SharpIR.h"
+#endif
+
 #if DISABLED(MAPPER_C2C3) && DISABLED(MAPPER_NON) && ENABLED(USE_BIG_EDIT_FONT)
   #undef USE_BIG_EDIT_FONT
 #endif
@@ -145,6 +149,7 @@
 
 #include "utf_mapper.h"
 
+extern SharpIR ir_ds;  //BQ
 int lcd_contrast;
 static unsigned char blink = 0; // Variable for visualization of fan rotation in GLCD
 static char currentfont = 0;
@@ -284,7 +289,7 @@ static void lcd_implementation_status_screen() {
   u8g.setColorIndex(1); // black on white
 
   // Symbols menu graphics, animated fan
-  u8g.drawBitmapP(9,1,STATUS_SCREENBYTEWIDTH,STATUS_SCREENHEIGHT, (blink % 2) && fanSpeed ? status_screen0_bmp : status_screen1_bmp);
+  // BQ u8g.drawBitmapP(9,1,STATUS_SCREENBYTEWIDTH,STATUS_SCREENHEIGHT, (blink % 2) && fanSpeed ? status_screen0_bmp : status_screen1_bmp);
 
   #if ENABLED(SDSUPPORT)
     // SD Card Symbol
@@ -317,25 +322,25 @@ static void lcd_implementation_status_screen() {
   #endif
 
   // Extruders
-  for (int i = 0; i < EXTRUDERS; i++) _draw_heater_status(6 + i * 25, i);
+  //for (int i = 0; i < EXTRUDERS; i++) _draw_heater_status(6 + i * 25, i); //BQ Commented Out
 
   // Heatbed
-  if (EXTRUDERS < 4) _draw_heater_status(81, -1);
+  //if (EXTRUDERS < 4) _draw_heater_status(81, -1);  //BQ commented out
 
-  // Fan
-  lcd_setFont(FONT_STATUSMENU);
-  u8g.setPrintPos(104, 27);
-  #if HAS_FAN
-    int per = ((fanSpeed + 1) * 100) / 256;
-    if (per) {
-      lcd_print(itostr3(per));
-      lcd_print('%');
-    }
-    else
-  #endif
-    {
-      lcd_printPGM(PSTR("---"));
-    }
+  // Fan - Commented Out Section BQ
+  //lcd_setFont(FONT_STATUSMENU);
+  //u8g.setPrintPos(104, 27);
+  //#if HAS_FAN
+  //  int per = ((fanSpeed + 1) * 100) / 256;
+  //  if (per) {
+  //    lcd_print(itostr3(per));
+  //    lcd_print('%');
+  //  }
+  //  else
+  //#endif
+  //  {
+  //    lcd_printPGM(PSTR("---"));
+  //  }
 
   // X, Y, Z-Coordinates
   #define XYZ_BASELINE 38
@@ -406,6 +411,27 @@ static void lcd_implementation_status_screen() {
       lcd_print('%');
     }
   #endif
+  
+  // Object Distance BQ
+  #define OBJ_BASELINE 28
+  lcd_setFont(FONT_STATUSMENU);
+
+  #if ENABLED(USE_SMALL_INFOFONT)
+    u8g.drawBox(0, 20, LCD_PIXEL_WIDTH, 10);
+  #else
+    u8g.drawBox(0, 20, LCD_PIXEL_WIDTH, 9);
+  #endif
+  u8g.setColorIndex(0); // white on black
+  u8g.setPrintPos(2, OBJ_BASELINE);
+  lcd_printPGM(PSTR("OBJ"));
+  u8g.drawPixel(19, OBJ_BASELINE - 5);
+  u8g.drawPixel(19, OBJ_BASELINE - 3);
+  u8g.setPrintPos(20, OBJ_BASELINE);
+  lcd_print(itostr3(ir_ds.distance()));
+  //if (axis_known_position[X_AXIS])
+  //  lcd_print(ftostr31ns(current_position[X_AXIS]));
+  //else
+  //  lcd_printPGM(PSTR("---"));
 }
 
 static void lcd_implementation_mark_as_selected(uint8_t row, bool isSelected) {
