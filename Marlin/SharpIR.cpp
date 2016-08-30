@@ -70,14 +70,28 @@ SharpIR::SharpIR(int irPin, int avg, int tolerance, int sensorModel) {
 //BQ 1080 is used for CDS
 int SharpIR::mm() {
     int raw=analogRead(_irPin);
+    if (raw > 600)                             // lower boundary: 4 cm (3 cm means under the boundary)
+    {
+      return (39);
+    }
+    if (raw < 80 )                             //upper boundary: 36 cm (returning 37 means over the boundary)
+    {
+      return (370);
+    }
+    else
+    {
     //Serial.print(raw);
-    float puntualDistance=12343.85*pow(raw,-1.15)*10;
+    float puntualDistance=(1 / (0.000413153 * raw - 0.0055266887))*10;
+    //float puntualDistance=12343.85*pow(raw,-1.15)*10;
     return puntualDistance;
     }
+}
 
 int SharpIR::cm() {
+  return mm()/10;
+}
     
-    int raw=analogRead(_irPin);
+    /*int raw=analogRead(_irPin);
     float voltFromRaw=map(raw, 0, 1023, 0, 5000);
     
     int puntualDistance;
@@ -96,7 +110,7 @@ int SharpIR::cm() {
     return puntualDistance;
 
 
-}
+}*/
 
 
 

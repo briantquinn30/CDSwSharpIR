@@ -110,8 +110,6 @@ FORCE_INLINE void serialprintPGM(const char* str) {
 
 void get_command();
 
-void init_home_and_sensor();
-
 void idle(); // the standard idle routine calls manage_inactivity(false)
 
 void manage_inactivity(bool ignore_stepper_queue = false);
@@ -304,7 +302,6 @@ extern bool axis_known_position[3]; // axis[n].is_known
 
 #if ENABLED(AUTO_BED_LEVELING_FEATURE)
   extern float zprobe_zoffset;
-  extern bool bed_leveled;
 #endif
 
 #if ENABLED(PREVENT_DANGEROUS_EXTRUDE)

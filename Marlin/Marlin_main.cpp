@@ -424,11 +424,6 @@ bool target_direction;
   Servo servo[NUM_SERVOS];
 #endif
 
-//void ir_distance_sensor_init() // BQ
-//{
-  //SharpIR ir_ds(IR_DISTANCE_SENSOR_PIN, IR_DISTANCE_SENSOR_AVG,IR_DISTANCE_SENSOR_TOL, IR_DISTANCE_SENSOR_MODEL);   
-//}
-
 #ifdef IR_DISTANCE_SENSOR
    SharpIR ir_ds(IR_DISTANCE_SENSOR_PIN, IR_DISTANCE_SENSOR_AVG,IR_DISTANCE_SENSOR_TOL, IR_DISTANCE_SENSOR_MODEL); 
 #endif
@@ -1341,27 +1336,29 @@ static void setup_for_endstop_move() {
       feedrate = homing_feedrate[Z_AXIS];
 
       // Move down until the Z probe (or endstop?) is triggered
-      float zPosition = -(Z_MAX_LENGTH + 10);
-      line_to_z(zPosition);
-      st_synchronize();
+//      float zPosition = -(Z_MAX_LENGTH + 10);
+//      line_to_z(zPosition);
+//      st_synchronize();
 
       // Tell the planner where we ended up - Get this from the stepper handler
-      zPosition = st_get_position_mm(Z_AXIS);
+//      zPosition = st_get_position_mm(Z_AXIS);
+      float zPosition = ir_ds.distance();
       plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
 
       // move up the retract distance
-      zPosition += home_bump_mm(Z_AXIS);
+//      zPosition += home_bump_mm(Z_AXIS);
+      zPosition = home_bump_mm(Z_AXIS);
       line_to_z(zPosition);
       st_synchronize();
       endstops_hit_on_purpose(); // clear endstop hit flags
 
       // move back down slowly to find bed
-      set_homing_bump_feedrate(Z_AXIS);
+//      set_homing_bump_feedrate(Z_AXIS);
 
-      zPosition -= home_bump_mm(Z_AXIS) * 2;
-      line_to_z(zPosition);
-      st_synchronize();
-      endstops_hit_on_purpose(); // clear endstop hit flags
+//      zPosition -= home_bump_mm(Z_AXIS) * 2;
+//      line_to_z(zPosition);
+//      st_synchronize();
+//      endstops_hit_on_purpose(); // clear endstop hit flags
 
       // Get the current stepper position after bumping an endstop
       current_position[Z_AXIS] = st_get_position_mm(Z_AXIS);
@@ -1887,73 +1884,124 @@ static void homeaxis(AxisEnum axis) {
       if (axis == Z_AXIS) In_Homing_Process(true);
     #endif
 
-    // Move towards the endstop until an endstop is triggered
-    destination[axis] = 1.5 * max_length(axis) * axis_home_dir;
-    feedrate = homing_feedrate[axis];
-    line_to_destination();
-    st_synchronize();
-
-    // Set the axis position as setup for the move
-    current_position[axis] = 0;
-    sync_plan_position();
-
-    #if ENABLED(DEBUG_LEVELING_FEATURE)
-      if (marlin_debug_flags & DEBUG_LEVELING) {
-        SERIAL_ECHOLNPGM("> enable_endstops(false)");
-      }
-    #endif
-    enable_endstops(false); // Disable endstops while moving away
-
-    // Move away from the endstop by the axis HOME_BUMP_MM
-    destination[axis] = -home_bump_mm(axis) * axis_home_dir;
-    line_to_destination();
-    st_synchronize();
-
-    #if ENABLED(DEBUG_LEVELING_FEATURE)
-      if (marlin_debug_flags & DEBUG_LEVELING) {
-        SERIAL_ECHOLNPGM("> enable_endstops(true)");
-      }
-    #endif
-    enable_endstops(true); // Enable endstops for next homing move
-
-    // Slow down the feedrate for the next move
-    set_homing_bump_feedrate(axis);
-
-    // Move slowly towards the endstop until triggered
-    destination[axis] = 2 * home_bump_mm(axis) * axis_home_dir;
-    line_to_destination();
-    st_synchronize();
-
-    #if ENABLED(DEBUG_LEVELING_FEATURE)
-      if (marlin_debug_flags & DEBUG_LEVELING) {
-        print_xyz("> TRIGGER ENDSTOP > current_position", current_position);
-      }
-    #endif
-
-    #if ENABLED(Z_DUAL_ENDSTOPS)
+//BQ - Z Homing is different with IR_DISTANCE_SENSOR
+    #if IR_DISTANCE_SENDOR
       if (axis == Z_AXIS) {
-        float adj = fabs(z_endstop_adj);
-        bool lockZ1;
-        if (axis_home_dir > 0) {
-          adj = -adj;
-          lockZ1 = (z_endstop_adj > 0);
-        }
-        else
-          lockZ1 = (z_endstop_adj < 0);
-
-        if (lockZ1) Lock_z_motor(true); else Lock_z2_motor(true);
-        sync_plan_position();
-
-        // Move to the adjusted endstop height
+        current_position[axis] = ir_ds.distance();
+        } // Z_AXIS
+      else {
+        // Move towards the endstop until an endstop is triggered
+        destination[axis] = 1.5 * max_length(axis) * axis_home_dir;
         feedrate = homing_feedrate[axis];
-        destination[Z_AXIS] = adj;
         line_to_destination();
         st_synchronize();
-
-        if (lockZ1) Lock_z_motor(false); else Lock_z2_motor(false);
-        In_Homing_Process(false);
-      } // Z_AXIS
-    #endif
+    
+        // Set the axis position as setup for the move
+        current_position[axis] = 0;
+        sync_plan_position();
+    
+        #if ENABLED(DEBUG_LEVELING_FEATURE)
+          if (marlin_debug_flags & DEBUG_LEVELING) {
+            SERIAL_ECHOLNPGM("> enable_endstops(false)");
+          }
+        #endif
+        enable_endstops(false); // Disable endstops while moving away
+    
+        // Move away from the endstop by the axis HOME_BUMP_MM
+        destination[axis] = -home_bump_mm(axis) * axis_home_dir;
+        line_to_destination();
+        st_synchronize();
+    
+        #if ENABLED(DEBUG_LEVELING_FEATURE)
+          if (marlin_debug_flags & DEBUG_LEVELING) {
+            SERIAL_ECHOLNPGM("> enable_endstops(true)");
+          }
+        #endif
+        enable_endstops(true); // Enable endstops for next homing move
+    
+        // Slow down the feedrate for the next move
+        set_homing_bump_feedrate(axis);
+    
+        // Move slowly towards the endstop until triggered
+        destination[axis] = 2 * home_bump_mm(axis) * axis_home_dir;
+        line_to_destination();
+        st_synchronize();
+    
+        #if ENABLED(DEBUG_LEVELING_FEATURE)
+          if (marlin_debug_flags & DEBUG_LEVELING) {
+            print_xyz("> TRIGGER ENDSTOP > current_position", current_position);
+          }
+        #endif
+      }
+     #else
+      // Move towards the endstop until an endstop is triggered
+      destination[axis] = 1.5 * max_length(axis) * axis_home_dir;
+      feedrate = homing_feedrate[axis];
+      line_to_destination();
+      st_synchronize();
+  
+      // Set the axis position as setup for the move
+      current_position[axis] = 0;
+      sync_plan_position();
+  
+      #if ENABLED(DEBUG_LEVELING_FEATURE)
+        if (marlin_debug_flags & DEBUG_LEVELING) {
+          SERIAL_ECHOLNPGM("> enable_endstops(false)");
+        }
+      #endif
+      enable_endstops(false); // Disable endstops while moving away
+  
+      // Move away from the endstop by the axis HOME_BUMP_MM
+      destination[axis] = -home_bump_mm(axis) * axis_home_dir;
+      line_to_destination();
+      st_synchronize();
+  
+      #if ENABLED(DEBUG_LEVELING_FEATURE)
+        if (marlin_debug_flags & DEBUG_LEVELING) {
+          SERIAL_ECHOLNPGM("> enable_endstops(true)");
+        }
+      #endif
+      enable_endstops(true); // Enable endstops for next homing move
+  
+      // Slow down the feedrate for the next move
+      set_homing_bump_feedrate(axis);
+  
+      // Move slowly towards the endstop until triggered
+      destination[axis] = 2 * home_bump_mm(axis) * axis_home_dir;
+      line_to_destination();
+      st_synchronize();
+  
+      #if ENABLED(DEBUG_LEVELING_FEATURE)
+        if (marlin_debug_flags & DEBUG_LEVELING) {
+          print_xyz("> TRIGGER ENDSTOP > current_position", current_position);
+        }
+      #endif
+  
+      #if ENABLED(Z_DUAL_ENDSTOPS)
+        if (axis == Z_AXIS) {
+          float adj = fabs(z_endstop_adj);
+          bool lockZ1;
+          if (axis_home_dir > 0) {
+            adj = -adj;
+            lockZ1 = (z_endstop_adj > 0);
+          }
+          else
+            lockZ1 = (z_endstop_adj < 0);
+  
+          if (lockZ1) Lock_z_motor(true); else Lock_z2_motor(true);
+          sync_plan_position();
+  
+          // Move to the adjusted endstop height
+          feedrate = homing_feedrate[axis];
+          destination[Z_AXIS] = adj;
+          line_to_destination();
+          st_synchronize();
+  
+          if (lockZ1) Lock_z_motor(false); else Lock_z2_motor(false);
+          In_Homing_Process(false);
+        } // Z_AXIS
+      #endif // Z Dual End Stops
+    #endif //IR_Distance_Sensor
 
     #if ENABLED(DELTA)
       // retrace by the amount specified in endstop_adj
@@ -2621,7 +2669,7 @@ inline void gcode_G28() {
 
 }
 
-inline void init_home_and_sensor () {  // BQ An initial homing plus distance measurement from IR Probe
+/*inline void init_home_and_sensor () {  // BQ An initial homing plus distance measurement from IR Probe
 
   #if ENABLED(DEBUG_LEVELING_FEATURE)
     if (marlin_debug_flags & DEBUG_LEVELING) {
@@ -2920,7 +2968,7 @@ inline void init_home_and_sensor () {  // BQ An initial homing plus distance mea
     }
   #endif
 
-}
+} */
 
 #if ENABLED(MESH_BED_LEVELING)
 

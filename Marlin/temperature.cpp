@@ -749,9 +749,7 @@ static float analog2temp(int raw, uint8_t e) {
   #endif
 
   if (heater_ttbl_map[e] != NULL) {
-    //float celsius = 0; BQ
-    float celsius = 50; //BQ
-    return celsius;  //BQ
+    float celsius = 0;
     uint8_t i;
     short(*tt)[][2] = (short(*)[][2])(heater_ttbl_map[e]);
 
@@ -767,21 +765,17 @@ static float analog2temp(int raw, uint8_t e) {
 
     // Overflow: Set to last value in the table
     if (i == heater_ttbllen_map[e]) celsius = PGM_RD_W((*tt)[i - 1][1]);
-    //SERIAL_PROTOCOL("test");
-    return 50;  //BQ always return same number,  replaced celsius;
+
+    return celsius;
   }
-  return 50; // BQ((raw * ((5.0 * 100.0) / 1024.0) / OVERSAMPLENR) * TEMP_SENSOR_AD595_GAIN) + TEMP_SENSOR_AD595_OFFSET;
+  return ((raw * ((5.0 * 100.0) / 1024.0) / OVERSAMPLENR) * TEMP_SENSOR_AD595_GAIN) + TEMP_SENSOR_AD595_OFFSET;
 }
 
 // Derived from RepRap FiveD extruder::getTemperature()
 // For bed temperature measurement.
 static float analog2tempBed(int raw) {
-  float celsius= 50;   //BQ
-  return celsius;      //BQ 
   #if ENABLED(BED_USES_THERMISTOR)
-    //float celsius = 0; //BQ
-    
-
+    float celsius = 0;
     byte i;
 
     for (i = 1; i < BEDTEMPTABLE_LEN; i++) {
@@ -994,8 +988,6 @@ void tp_init() {
       else \
         maxttemp_raw[NR] += OVERSAMPLENR; \
     }
-    //SERIAL_PROTOCOLLN("TEsting temperatures");
-
 
   #ifdef HEATER_0_MINTEMP
     TEMP_MIN_ROUTINE(0);
@@ -1009,10 +1001,6 @@ void tp_init() {
     #endif
     #ifdef HEATER_1_MAXTEMP
       TEMP_MAX_ROUTINE(1);
-      //SERIAL_PROTOCOLLN("Setting Temperatures");
-      //SERIAL_PROTOCOLLN(HEATER_1_MAXTEMP);
-      //SERIAL_PROTOCOLLN(maxttemp_raw[1]);
-      //SERIAL_PROTOCOLLN(maxttemp[1]);
     #endif
     #if EXTRUDERS > 2
       #ifdef HEATER_2_MINTEMP
@@ -1031,7 +1019,7 @@ void tp_init() {
       #endif // EXTRUDERS > 3
     #endif // EXTRUDERS > 2
   #endif // EXTRUDERS > 1
-  //SERIAL_PROTOCOLLN(BED_MINTEMP);
+
   #ifdef BED_MINTEMP
     while(analog2tempBed(bed_minttemp_raw) < BED_MINTEMP) {
       #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
@@ -1050,7 +1038,6 @@ void tp_init() {
       #endif
     }
   #endif //BED_MAXTEMP
-  SERIAL_PROTOCOLLN("Completed Init");
 }
 
 #if ENABLED(THERMAL_PROTECTION_HOTENDS)
@@ -1246,7 +1233,7 @@ static unsigned long raw_temp_bed_value = 0;
 
 static void set_current_temp_raw() {
   #if HAS_TEMP_0 && DISABLED(HEATER_0_USES_MAX6675)
-    current_temperature_raw[0] = raw_temp_value[0];  //BQ Change Here?
+    current_temperature_raw[0] = raw_temp_value[0];
   #endif
   #if HAS_TEMP_1
     #if ENABLED(TEMP_SENSOR_1_AS_REDUNDANT)
